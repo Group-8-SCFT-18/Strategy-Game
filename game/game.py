@@ -118,6 +118,15 @@ class Game:
     def _require_owned_unit(self, player, unit):
             if unit not in player.units:
                 raise ValueError("Unit does not belong to this player")
+
+    @staticmethod
+    def _distance(first_position, second_position):
+            return sum(
+                abs(first_coordinate - second_coordinate)
+                for first_coordinate, second_coordinate in zip(
+                    first_position, second_position
+                )
+            )
     
     def _owner_of(self, unit):
             for player in self._players:

@@ -12,20 +12,20 @@ class Player:
         self._resources = resources or Resource()
         self._units = []
 
-        @property
-        def name(self):
-            #Return the player's name.
-            return self._name   
+    @property
+    def name(self):
+        #Return the player's name.
+        return self._name
 
-        @property
-        def resources(self):
-            #Return the player's resource manager.
-            return self._resources
+    @property
+    def resources(self):
+        #Return the player's resource manager.
+        return self._resources
 
-        @property
-        def units(self):
-            #Return the player's units without exposing the internal list.
-            return tuple(self._units)
+    @property
+    def units(self):
+        #Return the player's units without exposing the internal list.
+        return tuple(self._units)
 
     def add_unit(self, unit):
         #Add a unit to the player's army.
