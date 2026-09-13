@@ -35,7 +35,7 @@ def main():
         except ValueError as error:
             print(f"Action could not be completed: {error}")
 
-    print(f"{game.winner.name} wins the game!")
+    print(f"\n{game.winner.name} wins the game!")
 
 
 def create_game():
@@ -134,13 +134,47 @@ def move_unit(game):
 
 
 def attack_unit(game):
-    """Read an attacker and target, then resolve combat."""
+    """Read an attacker and target, check range, then resolve combat."""
     player = game.current_player
     attacker = choose_owned_unit(player)
     target_player = choose_opponent(game, player)
-    target = choose_owned_unit(target_player)
+
+    if not target_player.units:
+        raise ValueError(f"{target_player.name} has no units to attack.")
+
+    # Get attack range (default to 1 if not explicitly set on unit)
+    attack_range = getattr(attacker, "attack_range", 1)
+
+    # Filter target units within range
+    targets_in_range = [
+        target for target in target_player.units
+        if attacker.get_distance_to(target.position) <= attack_range
+    ]
+
+    if not targets_in_range:
+        raise ValueError(f"No enemy units within attack range ({attack_range} tile/s)")
+
+    # Select target from valid units in range
+    print("\nTargets in range:")
+    for index, target in enumerate(targets_in_range, start=1):
+        print(f"{index}. {target.name} at {target.position} (HP: {target.health}/{target.max_health})")
+
+    target_number = read_integer("Choose target to attack: ")
+    if not 1 <= target_number <= len(targets_in_range):
+        raise ValueError("Invalid target selection")
+
+    target = targets_in_range[target_number - 1]
+
+    # Resolve damage
     damage = game.attack(player, attacker, target)
-    print(f"{attacker.name} dealt {damage} damage to {target.name}.")
+    print(f"\n💥 {attacker.name} dealt {damage} damage to {target.name}!")
+
+    # Check for unit death
+    if target.health <= 0:
+        print(f"☠️ {target.name} has been destroyed!")
+        if hasattr(game.game_map, "remove_unit"):
+            game.game_map.remove_unit(target)
+        target_player.units.remove(target)
 
 
 def gather_resources(game):
@@ -163,8 +197,10 @@ def build_unit(game):
         raise ValueError("Unknown unit type")
 
     unit_name, unit_class, cost = unit_data
+    available_resources = player.resources.as_dict()
+
     for resource_type, amount in cost.items():
-        if player.resources.get(resource_type) < amount:
+        if available_resources.get(resource_type, 0) < amount:
             raise ValueError(f"Not enough {resource_type} to build {unit_name}")
 
     position = find_empty_position(game, player)
@@ -236,5 +272,7 @@ def read_position(prompt):
         return tuple(int(value) for value in values)
     except ValueError as error:
         raise ValueError("Coordinates must be whole numbers") from error
+
+
 if __name__ == "__main__":
     main()
