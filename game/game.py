@@ -71,6 +71,12 @@ class Game:
         self._require_owned_unit(player, unit)
         self._map.move_unit(unit, destination)
 
+        resource = self._map.get_resource_at(destination)
+        if resource is not None:
+            self._map.remove_resource(resource)
+            player.collect_resource(resource.resource_type, resource.amount)
+        return resource
+
     def attack(self, player, attacker, target):
         """Resolve an attack and remove a defeated unit from the game."""
         self._require_active_player(player)

@@ -6,6 +6,11 @@ class Soldier(Unit):
             name=name,
             health=100,
             attack_power=20,
+            defense=5,
             movement_range=2,
-            position=position  # Pass position to the base class
+            attack_range=1,
+            position=position,
         )
+
+    def attack(self, enemy: Unit) -> int:
+        return enemy.take_damage(self.attack_power)
