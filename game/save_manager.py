@@ -93,7 +93,7 @@ class SaveManager:
 					name=unit_data["name"],
 					position=tuple(unit_data["position"]),
 				)
-				unit._health = unit_data["health"]
+				unit.health = unit_data["health"]
 				game.add_unit(player, unit)
 
 		game._turn_number = data["turn_number"]
