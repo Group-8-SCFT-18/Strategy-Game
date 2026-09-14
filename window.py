@@ -4,6 +4,7 @@ from ai.ai_player import AIPlayer
 from game.game import Game
 from game.map import Map
 from game.player import Player
+from game.resource import ResourceNode
 from units.soldier import Soldier
 
 
@@ -37,12 +38,16 @@ class StrategyWindow:
         root.bind("<Up>", lambda event: self._move_selected(0, -1))
         root.bind("<Down>", lambda event: self._move_selected(0, 1))
         root.bind("<Tab>", self._select_next)
+        root.bind("a", self._attack_selected)
+        root.bind("A", self._attack_selected)
         root.bind("<Return>", self._run_ai_turn)
         self.draw()
 
     def _add_starting_units(self):
         self.game.add_unit(self.human, Soldier(position=(1, 1)))
         self.game.add_unit(self.computer, Soldier(position=(6, 6)))
+        self.game.game_map.add_resource(ResourceNode((2, 1), "gold", amount=20))
+        self.game.game_map.add_resource(ResourceNode((5, 6), "food", amount=20))
 
     @property
     def selected_unit(self):
@@ -71,6 +76,28 @@ class StrategyWindow:
         self.draw()
         return "break"
 
+    def _attack_selected(self, event=None):
+        unit = self.selected_unit
+        if unit is None or self.game.current_player is not self.human:
+            return "break"
+
+        targets = [
+            enemy
+            for enemy_player in self.game.players
+            if enemy_player is not self.human
+            for enemy in enemy_player.units
+            if enemy.is_alive
+            and unit.get_distance_to(enemy.position) <= unit.attack_range
+        ]
+        if not targets:
+            self.status.set("No enemy in attack range")
+        else:
+            target = min(targets, key=lambda enemy: unit.get_distance_to(enemy.position))
+            damage = self.game.attack(self.human, unit, target)
+            self.status.set(f"Attacked {target.name} for {damage} damage")
+        self.draw()
+        return "break"
+
     def _run_ai_turn(self, event=None):
         if self.game.current_player is not self.human:
             return "break"
@@ -95,6 +122,16 @@ class StrategyWindow:
                     outline="#314252",
                     fill="#1f2d38" if (x + y) % 2 else "#223541",
                 )
+
+        for resource in self.game.game_map.resources:
+            x, y = resource.position
+            self.canvas.create_text(
+                (x + 0.5) * self.CELL_SIZE,
+                (y + 0.78) * self.CELL_SIZE,
+                text=resource.resource_type[0].upper(),
+                fill="#f4d35e",
+                font=("TkDefaultFont", 11, "bold"),
+            )
 
         for player, color in ((self.human, "#4ecdc4"), (self.computer, "#ff6b6b")):
             for unit in player.units:

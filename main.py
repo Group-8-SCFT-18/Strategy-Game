@@ -3,6 +3,7 @@
 from game.game import Game
 from game.map import Map
 from game.player import Player
+from ai.ai_player import AIPlayer
 from units.archer import Archer
 from units.soldier import Soldier
 from units.tank import Tank
@@ -42,7 +43,7 @@ def create_game():
     """Create the initial two-player game state."""
     game = Game(game_map=Map(width=8, height=8))
     first_player = Player("Player 1")
-    second_player = Player("Player 2")
+    second_player = AIPlayer("Computer")
     first_player.collect_resource("gold", 100)
     first_player.collect_resource("food", 100)
     first_player.collect_resource("wood", 100)
@@ -215,6 +216,11 @@ def build_unit(game):
 def end_turn(game):
     """End the active player's turn."""
     game.end_turn()
+    if isinstance(game.current_player, AIPlayer) and not game.is_over:
+        action = game.current_player.take_turn(game)
+        print(f"Computer turn: {action}.")
+        if not game.is_over:
+            game.end_turn()
     print(f"It is now {game.current_player.name}'s turn.")
 
 

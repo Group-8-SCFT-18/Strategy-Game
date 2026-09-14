@@ -116,6 +116,43 @@ def test_game_rejects_actions_during_another_players_turn():
         game.move_unit(first_player, unit, (1, 0))
 
 
+def test_active_player_can_attack_opponent():
+    game = Game(game_map=Map(width=5, height=5))
+    first_player = Player("Player 1")
+    second_player = Player("Player 2")
+    game.add_player(first_player)
+    game.add_player(second_player)
+    attacker = Soldier(position=(1, 1))
+    target = Soldier(position=(1, 2))
+    game.add_unit(first_player, attacker)
+    game.add_unit(second_player, target)
+
+    damage = game.attack(first_player, attacker, target)
+
+    assert damage == 15
+    assert target.health == 85
+
+
+def test_ai_can_collect_a_resource_on_its_turn():
+    from ai.ai_player import AIPlayer
+
+    game = Game(game_map=Map(width=8, height=8))
+    human = Player("Human")
+    computer = AIPlayer("Computer")
+    game.add_player(human)
+    game.add_player(computer)
+    game.add_unit(human, Soldier(position=(7, 7)))
+    computer_unit = Soldier(position=(1, 1))
+    game.add_unit(computer, computer_unit)
+    game.game_map.add_resource(ResourceNode((2, 1), "gold", amount=20))
+    game.end_turn()
+
+    assert computer.take_turn(game) == "move"
+    assert computer_unit.position == (2, 1)
+    assert computer.resources.get("gold") == 20
+    assert game.game_map.resources == ()
+
+
 def test_game_rejects_duplicate_player_names():
     game = Game()
     game.add_player(Player("Player 1"))
